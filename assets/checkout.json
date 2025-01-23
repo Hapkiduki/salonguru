@@ -1,0 +1,26 @@
+{
+    "statusCode": 200,
+    "checkout": {
+        "total_price": 4.98,
+        "items": [
+            {
+                "name": "Sleek Frozen Chair",
+                "quantity": 1,
+                "price": 2.99,
+                "description": "The automobile layout consists of a front-engine design, with transaxle-type transmissions mounted at the rear of the engine and four wheel drive",
+                "image": "https://picsum.photos/id/1/640/480",
+                "id": 1,
+                "total_price": 2.99
+            },
+            {
+                "name": "Handcrafted Soft Pizza",
+                "quantity": 1,
+                "price": 1.99,
+                "description": "Andy shoes are designed to keeping in mind durability as well as trends, the most stylish range of shoes & sandals",
+                "image": "https://picsum.photos/id/7/640/480",
+                "id": 7,
+                "total_price": 1.99
+            }
+        ]
+    }
+}

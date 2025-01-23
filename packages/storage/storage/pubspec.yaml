@@ -1,0 +1,11 @@
+name: storage
+description: A Key/Value Storage Client for Dart.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dev_dependencies:
+  test: ^1.21.4
+  very_good_analysis: ^7.0.0

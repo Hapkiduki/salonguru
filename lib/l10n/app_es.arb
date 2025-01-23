@@ -1,0 +1,28 @@
+{
+    "@@locale": "es",
+    "title": "SalonGuru",
+    "emptyMessage": "No hay {item} para mostrar",
+    "retryButton": "Intenta nuevamente",
+    "generalError": "Algo salio mal. Por favor intenta nuevamente.",
+    "errorAlertText": "Opps, Parece que algo salio mal!",
+    "succesAlertText": "Ya puedes visualizarlo en tu carrito de compras",
+    "succesAlertTitle": "Producto añadido a tu carrito!",
+    "productsItem": "producto",
+    "productsItemG": "productos",
+    "items": "Items:",
+    "explore": "Explora\n",
+    "ourProducts": "nuestros productos aqui!",
+    "hi": "Hola {name}",
+    "productSuccess": "Producto añadido a tu carrito!",
+    "stock": "Stock: ",
+    "addToCartButton": "Agregar al carrito",
+    "checkout": "Checkout",
+    "itemsAmount": "Cantidad de items:",
+    "totalCost": "Costo total:",
+    "backProductsButton": "Volver a los productos",
+    "alertCheckoutError": "Hubo un error al realizar el checkout.",
+    "alertCheckoutErrorTitle": "Ooops! Intenta mas tarde.",
+    "myCart": "Mi Carrito",
+    "proceedCheckout": "Pasar al checkout"
+    
+}
