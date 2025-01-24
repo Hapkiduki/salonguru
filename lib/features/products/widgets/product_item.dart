@@ -33,6 +33,7 @@ class ProductItem extends StatelessWidget {
                   tag: 'product_image_${product.id}',
                   child: BlurImage(
                     path: product.image,
+                    sizePercent: .22,
                   ),
                 ),
               ),
@@ -48,7 +49,7 @@ class ProductItem extends StatelessWidget {
                       bottomRight: Radius.circular(20),
                     ),
                   ),
-                  height: size.height * .18,
+                  height: size.height * .19,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 15, right: 8, top: 2),
                     child: Column(

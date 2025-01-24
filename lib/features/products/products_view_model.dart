@@ -26,8 +26,6 @@ class ProductsViewModel {
     );
   }
 
-  int contador = 0;
-
   Future<Result<void>> _addToCart(Product product) async {
     final result = await _addToCartUseCase(CartItem(product: product, quantity: 1));
     unawaited(loadCartItemsCommand.execute(const NoParams()));
@@ -35,11 +33,6 @@ class ProductsViewModel {
   }
 
   Future<Result<List<Product>>> _loadProducts(NoParams noParams) async {
-    if (contador == 0) {
-      contador += 1;
-      await Future.delayed(Duration(seconds: 2));
-      return FailureResult(Failure(message: 'Forbiden'));
-    }
     final result = await _getProductsUseCase.call(noParams);
     return result;
   }

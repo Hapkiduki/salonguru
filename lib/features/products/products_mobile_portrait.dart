@@ -1,9 +1,12 @@
+import 'dart:async';
+
+import 'package:commandy/commandy.dart';
 import 'package:flutter/material.dart';
 import 'package:salonguru/config/routes.dart';
 import 'package:salonguru/di/shared_dependencies.dart';
 import 'package:salonguru/domain/entities/cart_item.dart';
 import 'package:salonguru/domain/entities/product.dart';
-import 'package:salonguru/features/products/products_view_model.dart';
+import 'package:salonguru/features/features.dart';
 import 'package:salonguru/features/products/widgets/widgets.dart';
 import 'package:salonguru/l10n/l10n.dart';
 import 'package:salonguru/ui/widgets/beat_animation.dart';
@@ -29,10 +32,7 @@ class ProductsMobilePortrait extends StatefulWidget {
 }
 
 class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with TickerProviderStateMixin {
-  final productsViewModel = sl<ProductsViewModel>();
-
-  final Map<String, int> _cartItems = {};
-
+  List<CartItem> _cartItems = <CartItem>[];
   late final AnimationController _flyController;
   late final AnimationController _beatController;
 
@@ -52,14 +52,22 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
       vsync: this,
       duration: Durations.extralong3,
     );
-    preloadItems();
+    _cartItems = widget.cartItems ?? [];
+    if (_cartItems.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) {
+          _beatController.forward();
+        },
+      );
+    }
   }
 
   @override
   void didUpdateWidget(covariant ProductsMobilePortrait oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.cartItems != widget.cartItems) {
-      preloadItems();
+      _cartItems = widget.cartItems ?? [];
+      _avatarKeys.clear();
     }
   }
 
@@ -68,17 +76,6 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
     _flyController.dispose();
     _beatController.dispose();
     super.dispose();
-  }
-
-  void preloadItems() {
-    final x = widget.cartItems?.asMap().map<String, int>(
-          (key, value) => MapEntry(value.product.name, value.quantity),
-        );
-    if (x?.isNotEmpty ?? false) {
-      _cartItems.addAll(x!);
-    }
-
-    setState(() {});
   }
 
   double get pinkHeight {
@@ -93,13 +90,12 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
 
   double get pinkBorderRadius => _cartItems.isEmpty ? 0 : 40;
 
-  Future<void> _onItemTap(String item, GlobalKey itemKey) async {
+  Future<void> _onItemTap(Product product, GlobalKey itemKey) async {
     final startPos = _getWidgetGlobalPosition(itemKey);
-    final endPos = _getPositionInAmber(item);
-    await _flyToFavorites(item: item, startPos: startPos, endPos: endPos);
-    setState(() {
-      _cartItems[item] = (_cartItems[item] ?? 0) + 1;
-    });
+    final endPos = _getPositionInAmber(product.id.toString());
+    await _flyToCart(item: product.image, startPos: startPos, endPos: endPos);
+    widget.onAddToCartPressed.call(product);
+
     await _beatController.forward(from: 0);
   }
 
@@ -126,7 +122,7 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
     return Offset.zero;
   }
 
-  Future<void> _flyToFavorites({
+  Future<void> _flyToCart({
     required String item,
     required Offset startPos,
     required Offset endPos,
@@ -178,22 +174,16 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
     entry.remove();
   }
 
-  Widget _buildFlyingItem(String item) {
-    return Material(
-      elevation: 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      color: Colors.white,
-      child: SizedBox(
-        width: 160,
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.deepPurpleAccent,
-            child: Text(item.split(' ').last),
-          ),
-          title: Text(item),
-        ),
-      ),
+  Widget _buildFlyingItem(String path) {
+    return BlurImage(
+      path: path,
+      sizePercent: .1,
     );
+  }
+
+  Future<void> _goToCart() async {
+    await CartRoute().push<void>(context);
+    unawaited(sl<ProductsViewModel>().loadCartItemsCommand.execute(const NoParams()));
   }
 
   @override
@@ -229,12 +219,10 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
                           backgroundColor: const Color(0xffec837d),
                           foregroundColor: Colors.white70,
                           child: const Icon(Icons.shopping_bag_outlined),
-                          onPressed: () {
-                            CartRoute().go(context);
-                          },
+                          onPressed: _goToCart,
                         ),
                         Expanded(
-                          child: _buildFavoritesRow(),
+                          child: _buildCartItemsRow(),
                         ),
                       ],
                     ),
@@ -299,7 +287,7 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
       physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
         final product = widget.products![index];
-        final itemKey = GlobalKey();
+        final itemKey = GlobalObjectKey('item_${product.id}');
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -307,11 +295,10 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
             key: itemKey,
             product: product,
             onSelected: () {
-              ProductDetailRoute($extra: product).go(context);
+              goToDetails(product);
             },
             onAddToCartPressed: () {
-              widget.onAddToCartPressed.call(product);
-              _onItemTap(product.name, itemKey);
+              _onItemTap(product, itemKey);
             },
           ),
         );
@@ -319,17 +306,21 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
     );
   }
 
-  Widget _buildFavoritesRow() {
-    final favorites = _cartItems.entries.toList();
+  Future<void> goToDetails(Product product) async {
+    await ProductDetailRoute($extra: product).push<void>(context);
+    unawaited(sl<ProductsViewModel>().loadCartItemsCommand.execute(const NoParams()));
+  }
 
+  Widget _buildCartItemsRow() {
     return Center(
       child: ListView.builder(
-        itemCount: widget.cartItems?.length ?? 0,
+        itemCount: _cartItems.length,
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
-          final item = widget.cartItems![index];
-          return _buildFavoriteAvatar(
-            item.product.image,
+          final item = _cartItems[index];
+
+          return _buildCartItemAvatar(
+            item.product,
             item.quantity,
           );
         },
@@ -337,22 +328,23 @@ class _ProductsMobilePortraitState extends State<ProductsMobilePortrait> with Ti
     );
   }
 
-  Widget _buildFavoriteAvatar(String item, int count) {
-    final key = _avatarKeys[item] ?? GlobalKey();
-    _avatarKeys[item] = key;
+  Widget _buildCartItemAvatar(Product item, int count) {
+    final id = item.id.toString();
+    final key = _avatarKeys[id] ?? GlobalKey();
+    _avatarKeys[id] = key;
 
     return Container(
       alignment: Alignment.center,
       padding: const EdgeInsets.all(8),
-      //key: key,
+      key: key,
       child: Badge.count(
+        backgroundColor: Colors.redAccent,
         count: count,
         isLabelVisible: count > 1,
         alignment: Alignment.topLeft,
         child: BlurImage(
-          path: item,
+          path: item.image,
           sizePercent: .07,
-          key: key,
         ),
       ),
     );
